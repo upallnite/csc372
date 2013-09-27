@@ -1,15 +1,10 @@
 #define PushbuttonChanges ((volatile long *) 0x1000005C)
 #define LCD_display_ptr ((char *) 0x10003050)
 
-// Cursor location on lcd display
-//int cursor = 0;
-
 
 void displayTextLCDWithNewline(char * text_ptr, int newline)
 {
 	int text_ptr_length = 0;
-	
-	//printf("%s %d\n", text_ptr, cursor);
 	
 	while ( *(text_ptr) )
 	{
@@ -20,8 +15,6 @@ void displayTextLCDWithNewline(char * text_ptr, int newline)
 	
 	}
 	
-	// Update cursor position
-	//cursor += text_ptr_length;
 	
 	if(newline){
 		// Move the cursor to the second line
@@ -47,8 +40,6 @@ int main()
 			if(!first_button_pressed){
 				// Clear the display
 				*LCD_display_ptr = 0x01;
-				// Update cursor position
-				//cursor = 0;
 				// Print "Hello"
 				displayTextLCDWithNewline("Hello ",0);
 				// The first button has now been pressed
