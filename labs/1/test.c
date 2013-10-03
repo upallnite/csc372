@@ -149,43 +149,62 @@ void waitDiff(struct PD *pd, int diff) {
 // position assuming it should wait for waittime. The waittime 
 // values of the other elements in the list should be properly 
 // adjusted. Return -1 if list is not a waiting list and 0 otherwise.
+// waittime: total time a process should wait
+// pd->waittime: amount of time pd should wait after the process right before it is done waiting.
+
+// For example, let's say that we have the following list:
+
+// -> {pd1, wt:10} -> {pd2, wt:10} -> {pd3, wt:15}
+
+// This means that pd1 will be taken care of in 10 ms, pd2 in 10+10=20 ms time, pd3 in 10+10+15=35 ms time.
+
+// Let's say I call WaitlistEnqueue(pd4, 15, list). 
+
+// So pd4 should go after pd1, and the waittime field of pd4 is 5. 
+// We then update the waittime field of pd2 to 5 ms (since it now comes after pd4) and the 
+// waittime field of pd3 is still 15 ms.
 RC WaitlistEnqueue(struct PD *pd, int waittime, struct LL *list)
 {	
     struct PD *cur, *prev;
 
-	if (list->type == L_WAITING) {    
-		if (list->head == NULL) {
-			list->head = pd;
-		} else if (waittime < (list->head)->waittime){
-			pd->link = list->head;
-			list->head = pd;
-		} else {			
-			prev = list->head;
-			cur = prev->link;
+    if(!pd || !list){
+    	return FAIL;
+    }
+
+    if(list->type != L_WAITING){
+    	return FAIL;
+    }
+
+    if (list->head == NULL) {
+		list->head = pd;
+	} else if (waittime < (list->head)->waittime){
+		pd->link = list->head;
+		list->head = pd;
+	} else {			
+		prev = list->head;
+		cur = prev->link;
+		waittime -= prev->waittime;
+
+		while ((cur != NULL) && (waittime > cur->waittime))
+		{
+			prev = cur;
+  		  	cur = cur->link;
 			waittime -= prev->waittime;
-
-			while ((cur != NULL) && (waittime > cur->waittime))
-			{
-				prev = cur;
-  		  		cur = cur->link;
-				waittime -= prev->waittime;
-    		}
-    		if (cur != NULL) { 
-				pd->link = prev->link;
-				prev->link = pd;			
-			} else {
-        		prev->link = pd;
-			}
+    	}
+    	if (cur != NULL) { 
+			pd->link = prev->link;
+			prev->link = pd;			
+		} else {
+        	prev->link = pd;
 		}
-		pd->inlist = list;
-		pd->waittime = waittime;
-
-		waitDiff(pd->link, waittime);
-
-		return SUCC;
-	} else {
-		return FAIL;
 	}
+	pd->inlist = list;
+	pd->waittime = waittime;
+
+	waitDiff(pd->link, waittime);
+
+	return SUCC;
+	
 }
 
 // The PD before the PD with process id pid in list, 
@@ -330,6 +349,22 @@ void test(){
 	// NOTE: pd5 and pd4 are no longer in lifo_list!
 
 	// WaitlistEnqueue test
+	struct PD *wpd1 = createPD(1,4,0);
+	struct PD *wpd2 = createPD(2,5,0);
+	struct PD *wpd3 = createPD(3,3,0);
+	struct PD *wpd4 = createPD(4,1,0);
+	
+	assert(WaitlistEnqueue(NULL, 0, NULL) == FAIL);
+	assert(WaitlistEnqueue(wpd1, 10, wait_list) == SUCC);
+	assert(WaitlistEnqueue(wpd2, 20, wait_list) == SUCC);
+	assert(WaitlistEnqueue(wpd3, 35, wait_list) == SUCC);
+	assert(WaitlistEnqueue(wpd4, 15, wait_list) == SUCC);
+
+	assert(DequeueHead(wait_list) == wpd1);
+	assert(DequeueHead(wait_list) == wpd4);
+	assert(DequeueHead(wait_list) == wpd2);
+	assert(DequeueHead(wait_list) == wpd3);
+
 
 	// FindPD test
 	assert(FindPD(1,NULL) == NULL);
