@@ -6,8 +6,32 @@
 #include <stdlib.h>
 #include <assert.h>
 
-TD *Active, Kernel;
+// Fixed size array of TDs
+TD TD_ARRAY[128];
+
+// Contains the actively running thread
+TD *Active
+// Contains the kernel's stack pointer, default 
+// status register, and program counter of system 
+// call handler. Used to enter/exit to/from system calls.
+TD* Kernel;
+
 Stack KernelStack;
+
+// Contains the TD's of all threads that are ready to run, 
+// ordered by priority. When a thread is entered into the list, 
+// then it is to be positioned after all TD's with higher or 
+// equal priority. 
+LL* ReadyQ;
+
+// Contains the TDs of all threads currently blocked. See Suspend()
+LL* BlockedQ;
+
+// Contains all TDs that are currently unallocated. You have an array of 
+// thread descriptors, and not all of them  will always be used. Any descriptor 
+// that is not used should be placed into this queue, so that they are easily 
+// accessible when a new descriptor is needed.
+LL* FreeQ;
 
 void
 InitKernel(void) {
