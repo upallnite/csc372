@@ -7,7 +7,7 @@
 #include <assert.h>
 
 // Fixed size array of TDs
-TD TD_ARRAY[128];
+//TD TD_ARRAY[128];
 // 
 
 // Contains the actively running thread
@@ -36,12 +36,23 @@ LL* FreeQ;
 
 void
 InitKernel(void) {
+  
+  // Initialize actively running thread
   Active = CreateTD(1);
   InitTD(Active, 0, 0, 1);  //Will be set with proper return registers on context switch
+
+  // Initialize kernel's sp, sr and pc of syscall handler.
 #ifdef NATIVE
   InitTD(&Kernel, (uval32) SysCallHandler, (uval32) &(KernelStack.stack[STACKSIZE]), 0);
   Kernel.regs.sr = DEFAULT_KERNEL_SR;
 #endif /* NATIVE */
+
+  // Initialize lists
+  ReadyQ = CreateList(L_PRIORITY);
+
+  BlockedQ = CreateList(UNDEF);
+
+  FreeQ = CreateList(L_LIFO);
 }
 
 
@@ -79,6 +90,19 @@ RC CreateThread( uval32 pc, uval32 sp, uval32 priority )
   myprint("CreateThread ");
   return sysReturn;
 } 
+
+T_RC DestroyThread( ThreadId tid )
+{
+  TD* td_tid;
+
+  // Remove the thread descriptor from whatever queue it is in.
+  // DequeueTD(tid);
+
+  // Add TD identified by tid to the list of free descriptors
+  td_tid = CreateTD(tid);
+  return OK;
+
+}
 
 void 
 Idle() 

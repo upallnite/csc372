@@ -5,6 +5,7 @@
 
 typedef enum { UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
 
+// Range of priorities [1,100]
 #define MIN_PRIORITY 100
 
 typedef struct type_LL LL;
@@ -58,7 +59,6 @@ RC WaitlistEnqueue( TD *td, int waittime, LL *list );
 TD * FindPrevTD(ThreadId pid, LL* list);
 TD * FindTD(ThreadId pid, LL *list);
 void DequeueTD(TD* td);
-TD* createTD(ThreadId pid, int priority, int waittime);
 
 
 #endif

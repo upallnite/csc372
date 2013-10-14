@@ -11,7 +11,7 @@ struct type_STACK
   uval8 stack[STACKSIZE]; 
 };
 
-extern TD TD_ARRAY[128];
+//extern TD TD_ARRAY[128];
 
 extern TD* Active;
 extern TD Kernel;
@@ -21,6 +21,7 @@ extern LL* BlockedQ;
 extern LL* FreeQ;
 
 ThreadId CreateThread( uval32 pc, uval32 stackSize, uval32 priority );
+
 void Idle(void);
 void InitKernel(void);  
 
