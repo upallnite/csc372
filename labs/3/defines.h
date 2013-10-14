@@ -13,6 +13,9 @@ typedef enum { SYS_ENTER, SYS_EXIT } SysCallDir;
 
 typedef enum { RC_SUCCESS, RC_FAILED } RC;
 
+typedef enum { RESOURCE_ERROR, STACK_ERROR, PRIORITY_ERROR, TID_ERROR, \
+  NOT_BLOCKED, OK} T_RC;
+
 typedef int bool;
 #define TRUE (bool)1
 #define FALSE (bool)0
