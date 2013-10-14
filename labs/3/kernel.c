@@ -133,10 +133,28 @@ T_RC DestroyThread( ThreadId tid )
 
 }
 
+// Allows the invoking thread to yield the processor to the highest 
+// priority ready-to-run thread with equal or higher priority.
 T_RC Yield(){
 
-  
+  // Enqueue the Active thread onto the ReadyQ behind all threads of 
+  // the same, or higher, priority. 
+  PriorityEnqueue(Active, ReadyQ);
+  // Dispatch the ready-to-run thread with the highest priority
+  Active = DequeueHead(ReadyQ);
+
   return OK;
+}
+
+// Block the invoking thread until it is woken up again.
+T_RC Suspend(){
+
+  // Enqueue the Active thread onto BlockedQ
+  EnqueueAtHead(Active, BlockedQ);
+  // Dispatch the ready-to-run thread with the highest priority
+  Active = DequeueHead(ReadyQ);
+
+  return OK;  
 }
 
 void 

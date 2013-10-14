@@ -21,6 +21,9 @@ extern LL* BlockedQ;
 extern LL* FreeQ;
 
 ThreadId CreateThread( uval32 pc, uval32 stackSize, uval32 priority );
+T_RC DestroyThread( ThreadId tid );
+T_RC Yield();
+T_RC Suspend();
 
 void Idle(void);
 void InitKernel(void);  
