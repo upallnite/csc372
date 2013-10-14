@@ -46,7 +46,19 @@ struct type_TD
   LL * inlist;
 };
 
-TD *CreateTD(ThreadId tid);
-void InitTD(TD *td, uval32 pc, uval32 sp, uval32 priority);
+TD *CreateTD( ThreadId tid );
+void InitTD( TD *td, uval32 pc, uval32 sp, uval32 priority );
+LL *CreateList(ListType type);
+TD* DequeueHead( LL *list );
+RC DestroyList( LL *list );
+RC PriorityEnqueue( TD *td, LL *list );
+RC EnqueueAtHead( TD *td, LL *list );
+void waitDiff( TD *td, int diff );
+RC WaitlistEnqueue( TD *td, int waittime, LL *list ); 
+TD * FindPrevTD(ThreadId pid, LL* list);
+TD * FindTD(ThreadId pid, LL *list);
+void DequeueTD(TD* td);
+TD* createTD(ThreadId pid, int priority, int waittime);
+
 
 #endif

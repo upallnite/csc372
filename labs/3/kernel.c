@@ -8,13 +8,14 @@
 
 // Fixed size array of TDs
 TD TD_ARRAY[128];
+// 
 
 // Contains the actively running thread
-TD *Active
+TD *Active;
 // Contains the kernel's stack pointer, default 
 // status register, and program counter of system 
 // call handler. Used to enter/exit to/from system calls.
-TD* Kernel;
+TD Kernel;
 
 Stack KernelStack;
 
@@ -71,6 +72,10 @@ void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 RC CreateThread( uval32 pc, uval32 sp, uval32 priority ) 
 { 
   RC sysReturn = RC_SUCCESS;
+  // Allocate a stack at the user level
+  //Stack user_stack;
+  // Create a new thread descriptor to be allocated
+  //CreateTD()
   myprint("CreateThread ");
   return sysReturn;
 } 
