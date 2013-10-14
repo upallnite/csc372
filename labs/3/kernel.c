@@ -91,17 +91,52 @@ RC CreateThread( uval32 pc, uval32 sp, uval32 priority )
   return sysReturn;
 } 
 
+
+// Destroy the thread identified by tid.
 T_RC DestroyThread( ThreadId tid )
 {
   TD* td_tid;
 
+  // If tid is 0 or is the same as that of the invoking thread, 
+  // then the invoking thread should be destroyed.
+  // If the Active thread is killed, a new thread should be 
+  // dispatched.
+  if(tid == 0 || tid == Active->tid){
+    // Kill the Active Thread
+    Active = NULL;
+    // Dispatch the head of the ReadyQ.
+    // We know that there is at least one thread here
+    // (the idle thread).
+    // But what happens if the idle thread is destroyed? 
+    // Can this happen? Should we replace it if so?
+    Active = DequeueHead(ReadyQ);
+  }
+
   // Remove the thread descriptor from whatever queue it is in.
-  // DequeueTD(tid);
+
+  // First find the TD associated with tid by searching in the 
+  // three lists.
+  if((td_tid = FindTD(tid, ReadyQ)) == NULL){
+    if((td_tid = FindTD(tid, BlockedQ)) == NULL){
+      return TID_ERROR;
+    }
+  }
+
+  // Then dequeue the TD from the list it is in.
+  DequeueTD(td_tid);
 
   // Add TD identified by tid to the list of free descriptors
   td_tid = CreateTD(tid);
+  EnqueueAtHead(td_tid, FreeQ);
+
   return OK;
 
+}
+
+T_RC Yield(){
+
+  
+  return OK;
 }
 
 void 
