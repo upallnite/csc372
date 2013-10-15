@@ -51,7 +51,14 @@ void InitKernel(void) {
 
 	BlockedQ = CreateList(UNDEF);
 
-	FreeQ = CreateList(L_LIFO);
+	FreeQ = CreateList(L_PRIORITY);
+	int *cnt = 128;
+	while (*cnt > 0) {
+		TID * tid;
+		tid->id = cnt;
+		tid->link = FreeQ->head;
+		FreeQ->head = tid;
+	}
 }
 
 void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
@@ -93,6 +100,16 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 #endif /* NATIVE */
 }
 
+uval32 getTid(){
+	TID tid;
+
+	if ((tid = DequeueHeadFreeQ(FreeQ)) == NULL) {
+		return 0;
+	} else {
+		return tid.id;
+	}
+}
+
 /* 	Creates a new thread that should start executing the procedure pointed to by
  *	pc. Creating a new thread should be done by first allocating a stack at the
  *	user level (using malloc() with a minimum size of 8K). At the kernel level,
@@ -116,7 +133,7 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 		return PRIORITY_ERROR;
 	} else if ((tid == getTid())< 1) {
 		return RESOURCE_ERROR;
-	} else if ((ptr = realloc(8000)) == 0) {
+	} else if ((ptr = malloc(8000)) == 0) {
 		return STACK_ERROR;
 	}
 	//Stack user_stack;
@@ -184,7 +201,7 @@ T_RC ResumeThread(ThreadId tid) {
  */
 
 T_RC ChangeThreadPriority(ThreadId tid, int newPriority) {
-	TD td;
+	TD * td;
 
 	if (!tidExists(tid)) {
 		return TID_ERROR;

@@ -10,6 +10,7 @@ typedef enum { UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
 
 typedef struct type_LL LL;
 typedef struct type_TD TD;
+typedef struct type_TID TID;
 typedef struct type_REGS Registers;
 
 struct type_REGS
@@ -23,6 +24,12 @@ struct type_LL
 {
   TD *head;
   ListType type;
+};
+
+struct type_TID
+{
+  TID * link;
+  uval32 id;
 };
 
 struct type_TD
