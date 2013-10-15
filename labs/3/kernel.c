@@ -148,17 +148,22 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
  */
 
 T_RC ResumeThread(ThreadId tid) {
+	TD td;
 	T_RC err = 0;
 
 	if (!tidExists(tid)) {
 		return TID_ERROR;
-	} else if (tid.inlist != BlockedQ) {
-		return NOT_BLOCKED;
 	} else {
-		tid.inlist = ReadyQ;
+		td = getTD(tid);
 	}
 
-	if (priority > currentThreadPriority) {
+	if (td.inlist != BlockedQ) {
+		return NOT_BLOCKED;
+	} else {
+		td.inlist = ReadyQ;
+	}
+
+	if (td.priority > currentThreadPriority) {
     	yield();
     }
 
@@ -179,7 +184,27 @@ T_RC ResumeThread(ThreadId tid) {
  */
 
 T_RC ChangeThreadPriority(ThreadId tid, int newPriority) {
+	TD td;
 
+	if (!tidExists(tid)) {
+		return TID_ERROR;
+	} else {
+		td = getTD(tid);
+	}
+
+	if ((newPriority < 1) & (newPriority > 128)) {
+		return PRIORITY_ERROR;
+	}
+
+	td.priority = newPriority;
+
+	if (td.inlist == ReadyQ){
+		if (dequeue(td, ReadyQ)) {
+			priorityEnqueue(td, ReadyQ);
+		} else {
+			myprint("Dequeue error\n");
+		}
+	}
 
 	return OK;
 }
@@ -264,8 +289,7 @@ void Idle() {
 
 /*TO DO:
  * create:
- * 	getTid()
+ * 	getTD(tid)
  *	tidExists()
  *
- * get current thread attributes
  */
