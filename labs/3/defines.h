@@ -8,7 +8,7 @@ typedef unsigned char  uval8;
 typedef unsigned int   uval32;
 typedef uval32 ThreadId; 
 
-typedef enum { SYS_CREATE } SysCallType;
+typedef enum { SYS_CREATE, SYS_DIST, SYS_YIELD, SYS_SUSP, SYS_RESUME, SYS_CHANGE_PRI} SysCallType;
 typedef enum { SYS_ENTER, SYS_EXIT } SysCallDir; 
 
 typedef enum { RC_SUCCESS, RC_FAILED } RC;

@@ -5,8 +5,8 @@
 
 typedef enum { UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
 
-// Range of priorities [1,100]
-#define MIN_PRIORITY 100
+// Range of priorities [1,128]
+#define MIN_PRIORITY 128
 
 typedef struct type_LL LL;
 typedef struct type_TD TD;
@@ -38,7 +38,7 @@ struct type_TD
   // Holds the current priority of the thread by convention in systems software 
   // (particularly for UNIX), the higher the number in priority the lower the 
   // importance of the thread.
-  int priority;
+  uval32 priority;
   // ?
   int waittime;
   // Used to temporarily hold the return value of a system call
