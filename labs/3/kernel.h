@@ -22,8 +22,11 @@ extern LL* FreeQ;
 
 ThreadId CreateThread( uval32 pc, uval32 stackSize, uval32 priority );
 T_RC DestroyThread( ThreadId tid );
+T_RC ResumeThread( ThreadId tid );
+T_RC ChangeThreadPriority(ThreadId tid, int newPriority);
 T_RC Yield();
 T_RC Suspend();
+
 
 void Idle(void);
 void InitKernel(void);  

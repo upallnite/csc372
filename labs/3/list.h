@@ -7,6 +7,7 @@ typedef enum { UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
 
 // Range of priorities [1,128]
 #define MIN_PRIORITY 128
+#define NUM_TID 1024
 
 typedef struct type_LL LL;
 typedef struct type_TD TD;
@@ -24,12 +25,6 @@ struct type_LL
 {
   TD *head;
   ListType type;
-};
-
-struct type_TID
-{
-  TID * link;
-  uval32 id;
 };
 
 struct type_TD

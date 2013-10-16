@@ -52,12 +52,13 @@ void InitKernel(void) {
 	BlockedQ = CreateList(UNDEF);
 
 	FreeQ = CreateList(L_PRIORITY);
-	int *cnt = 128;
-	while (*cnt > 0) {
-		TID * tid;
-		tid->id = cnt;
+	int tid_cnt = NUM_TID;
+	while (tid_cnt > 0) {
+		TD * tid;
+		tid->priority = tid_cnt;
 		tid->link = FreeQ->head;
 		FreeQ->head = tid;
+		tid_cnt--;
 	}
 }
 
@@ -84,10 +85,10 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 		err = Suspend();
 		break;
 	case SYS_RESUME:
-		err = ResumeThread(arg0);
+		err = ResumeThread((ThreadId)arg0);
 		break;
 	case SYS_CHANGE_PRI:
-		err = ChangeThreadPrioirty(arg0, arg1);
+		err = ChangeThreadPriority(arg0, arg1);
 		break;
 	default:
 		myprint("Invalid SysCall type\n");
@@ -99,14 +100,65 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 	asm( "trap" );
 #endif /* NATIVE */
 }
+/*
+ * Gets a tid from FreeQ and returns it.
+ * Returns 0 if FreeQ is empty.
+ */
+
 
 uval32 getTid(){
-	TID tid;
+	TD * tid;
 
-	if ((tid = DequeueHeadFreeQ(FreeQ)) == NULL) {
+	if ((tid = DequeueHead(FreeQ))->link == NULL) {
 		return 0;
 	} else {
-		return tid.id;
+		return tid->priority;
+	}
+}
+
+/*
+ * Given a tid, returns the associated TD struct.
+ * Returns NULL if is not found in ReadyQ or BlockedQ.
+ *
+ */
+
+TD * getTD(ThreadId tid) {
+
+	TD * ptr = ReadyQ->head;
+
+	while (ptr != NULL) {
+		if (ptr->tid == tid) {
+			return ptr;
+		} else {
+			ptr = ptr->link;
+		}
+	}
+
+	ptr = BlockedQ->head;
+
+	while (ptr != NULL) {
+			if (ptr->tid == tid) {
+				return ptr;
+			} else {
+				ptr = ptr->link;
+			}
+		}
+	return NULL;
+}
+
+int tidInUse(ThreadId tid) {
+	if ((tid > NUM_TID) || (tid < 1)) {
+		return 0;
+	} else {
+		TD *ptr = FreeQ->head;
+		while (ptr != NULL) {
+			if (ptr->priority == tid) {
+				return 1;
+			} else {
+				ptr = ptr->link;
+			}
+		}
+		return 0;
 	}
 }
 
@@ -126,14 +178,14 @@ uval32 getTid(){
 
 RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 	int *ptr, tid;
-	TD thread;
+	TD *thread;
 	RC sysReturn = RC_SUCCESS;
 
 	if ((priority < 1) & (priority > 128)) {
 		return PRIORITY_ERROR;
 	} else if ((tid == getTid())< 1) {
 		return RESOURCE_ERROR;
-	} else if ((ptr = malloc(8000)) == 0) {
+	} else if ((ptr = malloc(8192)) == 0) {
 		return STACK_ERROR;
 	}
 	//Stack user_stack;
@@ -147,8 +199,8 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 
 	myprint("CreateThread ");
 
-	if (priority > currentThreadPriority) {
-    	yield();
+	if (priority > Active->priority) {
+    	Yield();
     }
 
 	return sysReturn;
@@ -165,26 +217,25 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
  */
 
 T_RC ResumeThread(ThreadId tid) {
-	TD td;
+	TD * td;
 	T_RC err = 0;
 
-	if (!tidExists(tid)) {
+	if (!tidInUse(tid)) {
+		return TID_ERROR;
+	} else if ((td = getTD(tid)) == NULL) {
 		return TID_ERROR;
 	} else {
-		td = getTD(tid);
+		if (td->inlist != BlockedQ) {
+			return NOT_BLOCKED;
+		} else {
+			td->inlist = ReadyQ;
+		}
+
+		if (td->priority > Active->priority) {
+			Yield();
+		}
+		return OK;
 	}
-
-	if (td.inlist != BlockedQ) {
-		return NOT_BLOCKED;
-	} else {
-		td.inlist = ReadyQ;
-	}
-
-	if (td.priority > currentThreadPriority) {
-    	yield();
-    }
-
-	return OK;
 }
 
 /* ChangePriorityThread:
@@ -203,7 +254,7 @@ T_RC ResumeThread(ThreadId tid) {
 T_RC ChangeThreadPriority(ThreadId tid, int newPriority) {
 	TD * td;
 
-	if (!tidExists(tid)) {
+	if (!tidInUse(tid)) {
 		return TID_ERROR;
 	} else {
 		td = getTD(tid);
@@ -213,11 +264,11 @@ T_RC ChangeThreadPriority(ThreadId tid, int newPriority) {
 		return PRIORITY_ERROR;
 	}
 
-	td.priority = newPriority;
+	td->priority = newPriority;
 
-	if (td.inlist == ReadyQ){
-		if (dequeue(td, ReadyQ)) {
-			priorityEnqueue(td, ReadyQ);
+	if (td->inlist == ReadyQ){
+		if (Dequeue(td, ReadyQ)) {
+			PriorityEnqueue(td, ReadyQ);
 		} else {
 			myprint("Dequeue error\n");
 		}
