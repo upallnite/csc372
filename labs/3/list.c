@@ -72,12 +72,12 @@ TD * DequeueHead( LL *list )
     return head;
 }
 
-int Dequeue( TD td, LL *list ) {
-	TD * ptr = list.head;
+int Dequeue( TD* td, LL *list ) {
+	TD * ptr = list->head;
 
 	while (ptr->link != NULL) {
 		if (ptr->link == td) {
-			ptr->link = td.link;
+			ptr->link = td->link;
 			return 1;
 		}
 		ptr = ptr->link;

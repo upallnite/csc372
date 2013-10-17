@@ -67,7 +67,7 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 	case SYS_CREATE:
 		returnCode = CreateThread(arg0, arg1, arg2);
 		break;
-	case SYS_DIST:
+	/*case SYS_DIST:
 		err = DestroyThread(arg0);
 		break;
 	case SYS_YIELD:
@@ -81,7 +81,7 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 		break;
 	case SYS_CHANGE_PRI:
 		err = ChangeThreadPrioirty(arg0, arg1);
-		break;
+		break;*/
 	default:
 		myprint("Invalid SysCall type\n");
 		returnCode = RC_FAILED;
@@ -136,6 +136,7 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 
 	return sysReturn;
 }
+
 
 /*	ResumeTread:
  *  Wakes up the thread identified by the tid and makes it ready to run. If
@@ -285,6 +286,7 @@ void Idle() {
 	 }
 	 */
 }
+
 
 
 /*TO DO:
