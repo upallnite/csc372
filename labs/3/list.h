@@ -7,9 +7,11 @@ typedef enum { UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
 
 // Range of priorities [1,128]
 #define MIN_PRIORITY 128
+#define NUM_TID 1024
 
 typedef struct type_LL LL;
 typedef struct type_TD TD;
+typedef struct type_TID TID;
 typedef struct type_REGS Registers;
 
 struct type_REGS

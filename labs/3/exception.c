@@ -75,6 +75,5 @@ void the_isr (void)
 
 void interrupt_handler(void)
 {
-  asm ( "call K_SysCall" );
-  
+
 }
