@@ -5,13 +5,13 @@ OBJS=$(addsuffix .o, $(basename ${SRCS}))
 TARGET=prog
 
 default: $(OBJS)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS)
+	$(CC) -ggdb  $(OBJS) -o $(TARGET)
 
 %.o: %.s
-	$(CC) $(CFLAGS) -o $*.o
+	$(CC) -ggdb $(CFLAGS) -o $*.o
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $?
+	$(CC) -ggdb $(CFLAGS) -c $?
 
 clean:
 	rm -f *.o $(TARGET)

@@ -135,7 +135,7 @@ RC PriorityEnqueue(TD *td, LL *list)
       prev = NULL;
       cur = list->head;
       while(cur){
-        if(cur->priority > td->priority){
+        if(cur->priority >= td->priority){
           if(!prev){
             td->link = list->head;
             list->head = td;

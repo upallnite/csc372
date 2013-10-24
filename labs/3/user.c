@@ -27,6 +27,7 @@ RC SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 	       : : "m" (sysMode), "m" (type), "m" (arg0), "m" (arg1), "m" (arg2)
 	       : "r4", "r5", "r6", "r7", "r8");  
 #else /* NATIVE */
+  myprint("Here\n");
   CreateThread(arg0, arg1, arg2); //Kernel system call - not normally accessible from user space
 #endif /* NATIVE */
   
@@ -39,6 +40,7 @@ void mymain()
   RC ret;
 
   ret = SysCall(SYS_CREATE, 0x1234, 0, 0); 
+  assert(ret == RC_SUCCESS);
   
   myprint("DONE\n");
 

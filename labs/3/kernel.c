@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+
 // Fixed size array of TDs
 TD TD_ARRAY[MAX_THREADS];
 // 
@@ -36,9 +37,12 @@ LL* FreeQ;
 
 void InitKernel(void) {
 
+	int i;
+	/*
 	// Initialize actively running thread
 	Active = CreateTD(1);
 	InitTD(Active, 0, 0, 1); //Will be set with proper return registers on context switch
+	*/
 
 	// Initialize kernel's sp, sr and pc of syscall handler.
 #ifdef NATIVE
@@ -52,6 +56,26 @@ void InitKernel(void) {
 	BlockedQ = CreateList(UNDEF);
 
 	FreeQ = CreateList(L_PRIORITY);
+
+	// Initialize ReadyQ with idle thread that has lowest priority
+	TD* idle_td = CreateTD(1);
+	InitTD(idle_td, (uval32) Idle, (uval32) &(KernelStack.stack[STACKSIZE]), MIN_PRIORITY);
+	PriorityEnqueue(idle_td, ReadyQ);
+
+	// Initialize FreeQ
+	for(i=0;i<NUM_TID;i++){
+		TD* free_td;
+		// No thread should have a TID of 0.
+		free_td = CreateTD(i+1);
+		InitTD(free_td, 0,0,0);
+		PriorityEnqueue(free_td, FreeQ);
+	}
+
+	// Initialize Active to the idle thread, i.e. yield
+	Yield();
+
+
+	/*
 	int tid_cnt = NUM_TID;
 	while (tid_cnt > 0) {
 		TD * tid;
@@ -60,6 +84,7 @@ void InitKernel(void) {
 		FreeQ->head = tid;
 		tid_cnt--;
 	}
+	*/
 }
 
 void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
@@ -109,7 +134,7 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 uval32 getTid(){
 	TD * tid;
 
-	if ((tid = DequeueHead(FreeQ))->link == NULL) {
+	if ((tid = DequeueHead(FreeQ)) == NULL) {
 		return 0;
 	} else {
 		return tid->priority;
@@ -341,17 +366,17 @@ T_RC Suspend() {
 }
 
 void Idle() {
-	/*
+	
 	 int i;
 	 while( 1 )
 	 {
-	 myprint( "CPU is idle\n" );
-	 for( i = 0; i < MAX_THREADS; i++ )
-	 {
+	 	myprint( "CPU is idle\n" );
+	 	for( i = 0; i < MAX_THREADS; i++ )
+	 	{
+	 	}
+	 	Yield();
 	 }
-	 Yield();
-	 }
-	 */
+	 
 }
 
 
