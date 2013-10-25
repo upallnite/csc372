@@ -14,7 +14,7 @@ typedef enum { SYS_ENTER, SYS_EXIT } SysCallDir;
 typedef enum { RC_SUCCESS, RC_FAILED } RC;
 
 typedef enum { RESOURCE_ERROR, STACK_ERROR, PRIORITY_ERROR, TID_ERROR, \
-  NOT_BLOCKED, OK} T_RC;
+  NOT_BLOCKED, FAILED, OK} T_RC;
 
 typedef int bool;
 #define TRUE (bool)1
@@ -34,7 +34,8 @@ typedef int bool;
 #define STACKSIZE 8192
 
 //Depends on the stack variables of your system call handler - mine has one
-#define SYS_HANDLER_OFFSET 4
+// Ours has two: change from 4 to 8, as noted in p.5 of the handout.
+#define SYS_HANDLER_OFFSET 8
 
 #ifdef NATIVE
 

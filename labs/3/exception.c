@@ -27,9 +27,14 @@ void the_isr (void)
 {
   asm (".set		noat");
   asm (".set		nobreak");
+  // For storing registers on stack (saving context)
   asm (	"subi	sp,  sp, 116");
+  // See whether interrupt was external or not.
   asm (	"rdctl	et,  ctl4");
   asm (	"beq	et,  r0, SOFT_INT");	/* Interrupt is not external         */
+  // External interrupt. 
+  // ea : exception return address. (r28)
+  // We set return address to instruction that lead to the interrupt.
   asm (	"subi	ea,  ea, 4");		
 
   //Hardware Interrupt
@@ -43,11 +48,18 @@ void the_isr (void)
 
   //Software Interrupt - Trap OR Illegal Insruction(not handled)
   asm ("SOFT_INT:");
+  // If there is no SYS_* parameter, i.e. we have SYS_EXIT, 
+  // go to soft_int_exit.
   asm ("bne r8, r0, SOFT_INT_EXIT");
 
   //System call enter - go to kernel
   asm ("SOFT_INT_ENTER:");
+  // Save context
   SAVE_REGS;
+
+  // Move the kernel's sp, pc and sr to active thread,
+  // since we are entering a syscall.
+  // When is kernel's sp stored in r27?
   MOVE_SP_TO_ACTIVE;
   MOVE_PC_TO_ACTIVE;
   MOVE_SR_TO_ACTIVE;
@@ -57,7 +69,16 @@ void the_isr (void)
   SET_KERNEL_FP;
   SET_KERNEL_SR;
   
+  // Call C routine to do work
+  asm ( "call K_SysCall");
+
   
+  // Restore context
+  //LOAD_REGS
+
+  // Return from K_SysCall. Context already restored, 
+  // so return from exception to user space of trap in 
+  // SysCall.
   asm (	"eret" );
 
   //System call exit - exit kernel, go to user
@@ -65,8 +86,11 @@ void the_isr (void)
   MOVE_ACTIVE_TO_PC;
   MOVE_ACTIVE_TO_SP;
   MOVE_ACTIVE_TO_SR;
+  // Done with C routine. Restore context, as done 
+  // in seminar3.pdf p 3. 
   LOAD_REGS;
   asm ( "addi sp,  sp, 116");
+  // Return from exception to user space from trap in K_SysCall
   asm ( "eret" );    
 }
 

@@ -18,6 +18,10 @@ RC SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 
 #ifdef NATIVE  
   uval32 sysMode = SYS_ENTER;  
+
+  // Save context on stack. This is already done in the isr.
+
+  // Load arguments, execute software trap to kernel.
   asm volatile("ldw r8, %0\n\t"
 	       "ldw r4, %1\n\t" 
 	       "ldw r5, %2\n\t"

@@ -87,6 +87,11 @@ void InitKernel(void) {
 	*/
 }
 
+/* 
+	- Decides who runs next(scheduling)
+	- Save current context
+	- Restore context of next active.
+*/
 void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 #ifdef NATIVE
 	asm(".align 4; .global SysCallHandler; SysCallHandler:");
@@ -94,33 +99,36 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 #endif
 
 	RC returnCode;
-	T_RC err;
+	//T_RC err;
 
 	switch (type) {
 	case SYS_CREATE:
 		returnCode = CreateThread(arg0, arg1, arg2);
 		break;
 	case SYS_DIST:
-		err = DestroyThread(arg0);
+		returnCode = DestroyThread(arg0);
 		break;
 	case SYS_YIELD:
-		err = Yield();
+		returnCode = Yield();
 		break;
 	case SYS_SUSP:
-		err = Suspend();
+		returnCode = Suspend();
 		break;
 	case SYS_RESUME:
-		err = ResumeThread((ThreadId)arg0);
+		returnCode = ResumeThread((ThreadId)arg0);
 		break;
 	case SYS_CHANGE_PRI:
-		err = ChangeThreadPriority(arg0, arg1);
+		returnCode = ChangeThreadPriority(arg0, arg1);
 		break;
 	default:
 		myprint("Invalid SysCall type\n");
-		returnCode = RC_FAILED;
+		returnCode = FAILED;
 		break;
 	}
 #ifdef NATIVE
+	// Once kernel has decided who to run next, 
+	// we store SYS_EXIT as our sysmode and return 
+	// to interrupt handler.
 	asm volatile("ldw r8, %0" : : "m" (sysMode): "r8");
 	asm( "trap" );
 #endif /* NATIVE */
@@ -201,10 +209,10 @@ int tidInUse(ThreadId tid) {
  *	in the range of valid priorities.
  */
 
-RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
+T_RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 	int *ptr, tid;
 	TD *thread;
-	RC sysReturn = RC_SUCCESS;
+	//RC sysReturn = RC_SUCCESS;
 
 	if ((priority < 1) & (priority > 128)) {
 		return PRIORITY_ERROR;
@@ -228,7 +236,11 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
     	Yield();
     }
 
-	return sysReturn;
+    // How can we make ThreadId a "subtype" of T_RC?
+	//return tid;
+
+	// Return OK for now
+	return OK;
 }
 
 /*	ResumeTread:
