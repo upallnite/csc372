@@ -3,7 +3,7 @@
 
 #include "defines.h"
 
-typedef enum { UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
+typedef enum { UNDEF, L_PRIORITY, L_LIFO, L_WAITING, L_CIRCULAR} ListType ;
 
 // Range of priorities [1,128]
 #define MIN_PRIORITY 128
@@ -24,6 +24,7 @@ struct type_REGS
 struct type_LL
 {
   TD *head;
+  TD *tail;
   ListType type;
 };
 
@@ -61,6 +62,8 @@ RC WaitlistEnqueue( TD *td, int waittime, LL *list );
 TD * FindPrevTD(ThreadId pid, LL* list);
 TD * FindTD(ThreadId pid, LL *list);
 void DequeueTD(TD* td);
+int FreeQEnqueue(TD *td, LL *list);
+TD * FreeQDequeue(LL *list);
 
 
 #endif

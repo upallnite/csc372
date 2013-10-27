@@ -54,6 +54,37 @@ LL *CreateList(ListType type)
     return newList;
 }
 
+int FreeQEnqueue(TD *td, LL *list) {
+	if ((list->head != NULL) && (list->tail != NULL)) {
+		list->tail->link = td;
+		td->link = list->head;
+		list->tail = td;
+		return 0;
+	} else {
+		list->head = td;
+		list->tail = td;
+		td->link = td;
+		return 0;
+	}
+	return 1; //failed to insert
+}
+
+int FreeQDequeue(LL *list) {
+	if (list->head == list->tail) { // Case: only one node remaining
+		TD *head = list->head;
+		list->head = NULL;
+		list->tail = NULL;
+		return head->priority;
+	} else if ((list->head != NULL) && (list->tail != NULL)) {
+		TD *head = list->head;
+		list->head = list->head->link;
+		list->tail->link = list->head;
+		return head->priority;
+	} else {
+		return 0; //nothing removed
+	}
+}
+
 //dequeues the TD at the head of list and returns a pointer to it, or else null.
 TD * DequeueHead( LL *list )
 {
@@ -135,7 +166,7 @@ RC PriorityEnqueue(TD *td, LL *list)
       prev = NULL;
       cur = list->head;
       while(cur){
-        if(cur->priority >= td->priority){
+        if(cur->priority > td->priority){
           if(!prev){
             td->link = list->head;
             list->head = td;

@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-
 // Fixed size array of TDs
 TD TD_ARRAY[MAX_THREADS];
 // 
@@ -37,12 +36,9 @@ LL* FreeQ;
 
 void InitKernel(void) {
 
-	int i;
-	/*
 	// Initialize actively running thread
 	Active = CreateTD(1);
 	InitTD(Active, 0, 0, 1); //Will be set with proper return registers on context switch
-	*/
 
 	// Initialize kernel's sp, sr and pc of syscall handler.
 #ifdef NATIVE
@@ -55,43 +51,16 @@ void InitKernel(void) {
 
 	BlockedQ = CreateList(UNDEF);
 
-	FreeQ = CreateList(L_PRIORITY);
-
-	// Initialize ReadyQ with idle thread that has lowest priority
-	TD* idle_td = CreateTD(1);
-	InitTD(idle_td, (uval32) Idle, (uval32) &(KernelStack.stack[STACKSIZE]), MIN_PRIORITY);
-	PriorityEnqueue(idle_td, ReadyQ);
-
-	// Initialize FreeQ
-	for(i=0;i<NUM_TID;i++){
-		TD* free_td;
-		// No thread should have a TID of 0.
-		free_td = CreateTD(i+1);
-		InitTD(free_td, 0,0,0);
-		PriorityEnqueue(free_td, FreeQ);
-	}
-
-	// Initialize Active to the idle thread, i.e. yield
-	Yield();
-
-
-	/*
+	FreeQ = CreateList(L_CIRCULAR);
 	int tid_cnt = NUM_TID;
 	while (tid_cnt > 0) {
 		TD * tid;
 		tid->priority = tid_cnt;
-		tid->link = FreeQ->head;
-		FreeQ->head = tid;
+		FreeQEnqueue(tid, FreeQ);
 		tid_cnt--;
 	}
-	*/
 }
 
-/* 
-	- Decides who runs next(scheduling)
-	- Save current context
-	- Restore context of next active.
-*/
 void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 #ifdef NATIVE
 	asm(".align 4; .global SysCallHandler; SysCallHandler:");
@@ -99,36 +68,33 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 #endif
 
 	RC returnCode;
-	//T_RC err;
+	T_RC err;
 
 	switch (type) {
 	case SYS_CREATE:
 		returnCode = CreateThread(arg0, arg1, arg2);
 		break;
 	case SYS_DIST:
-		returnCode = DestroyThread(arg0);
+		err = DestroyThread(arg0);
 		break;
 	case SYS_YIELD:
-		returnCode = Yield();
+		err = Yield();
 		break;
 	case SYS_SUSP:
-		returnCode = Suspend();
+		err = Suspend();
 		break;
 	case SYS_RESUME:
-		returnCode = ResumeThread((ThreadId)arg0);
+		err = ResumeThread((ThreadId)arg0);
 		break;
 	case SYS_CHANGE_PRI:
-		returnCode = ChangeThreadPriority(arg0, arg1);
+		err = ChangeThreadPriority(arg0, arg1);
 		break;
 	default:
 		myprint("Invalid SysCall type\n");
-		returnCode = FAILED;
+		returnCode = RC_FAILED;
 		break;
 	}
 #ifdef NATIVE
-	// Once kernel has decided who to run next, 
-	// we store SYS_EXIT as our sysmode and return 
-	// to interrupt handler.
 	asm volatile("ldw r8, %0" : : "m" (sysMode): "r8");
 	asm( "trap" );
 #endif /* NATIVE */
@@ -138,15 +104,8 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
  * Returns 0 if FreeQ is empty.
  */
 
-
 uval32 getTid(){
-	TD * tid;
-
-	if ((tid = DequeueHead(FreeQ)) == NULL) {
-		return 0;
-	} else {
-		return tid->priority;
-	}
+	return FreeQDequeue(FreeQ);
 }
 
 /*
@@ -178,13 +137,22 @@ TD * getTD(ThreadId tid) {
 		}
 	return NULL;
 }
+/* Checks FreeQ to see if tid is in use.
+ * If it is in use returns 1,
+ * if not returns 0
+ */
 
 int tidInUse(ThreadId tid) {
 	if ((tid > NUM_TID) || (tid < 1)) {
 		return 0;
 	} else {
 		TD *ptr = FreeQ->head;
-		while (ptr != NULL) {
+		if (ptr->priority == tid) { // Case: checks head for tid
+			return 1;
+		} else {
+			ptr = ptr->link;
+		}
+		while (ptr != FreeQ->head) { // Case: checks the rest of the list
 			if (ptr->priority == tid) {
 				return 1;
 			} else {
@@ -209,14 +177,14 @@ int tidInUse(ThreadId tid) {
  *	in the range of valid priorities.
  */
 
-T_RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
+RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 	int *ptr, tid;
 	TD *thread;
-	//RC sysReturn = RC_SUCCESS;
+	RC sysReturn = RC_SUCCESS;
 
 	if ((priority < 1) & (priority > 128)) {
 		return PRIORITY_ERROR;
-	} else if ((tid == getTid())< 1) {
+	} else if ((tid = getTid())) {
 		return RESOURCE_ERROR;
 	} else if ((ptr = malloc(8192)) == 0) {
 		return STACK_ERROR;
@@ -236,11 +204,7 @@ T_RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
     	Yield();
     }
 
-    // How can we make ThreadId a "subtype" of T_RC?
-	//return tid;
-
-	// Return OK for now
-	return OK;
+	return sysReturn;
 }
 
 /*	ResumeTread:
@@ -378,17 +342,17 @@ T_RC Suspend() {
 }
 
 void Idle() {
-	
+	/*
 	 int i;
 	 while( 1 )
 	 {
-	 	myprint( "CPU is idle\n" );
-	 	for( i = 0; i < MAX_THREADS; i++ )
-	 	{
-	 	}
-	 	Yield();
+	 myprint( "CPU is idle\n" );
+	 for( i = 0; i < MAX_THREADS; i++ )
+	 {
 	 }
-	 
+	 Yield();
+	 }
+	 */
 }
 
 
