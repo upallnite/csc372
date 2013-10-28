@@ -74,12 +74,12 @@ int FreeQDequeue(LL *list) {
 		TD *head = list->head;
 		list->head = NULL;
 		list->tail = NULL;
-		return head->priority;
+		return head->tid;
 	} else if ((list->head != NULL) && (list->tail != NULL)) {
 		TD *head = list->head;
 		list->head = list->head->link;
 		list->tail->link = list->head;
-		return head->priority;
+		return head->tid;
 	} else {
 		return 0; //nothing removed
 	}
@@ -166,7 +166,7 @@ RC PriorityEnqueue(TD *td, LL *list)
       prev = NULL;
       cur = list->head;
       while(cur){
-        if(cur->priority > td->priority){
+        if(cur->priority >= td->priority){
           if(!prev){
             td->link = list->head;
             list->head = td;

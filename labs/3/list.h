@@ -54,6 +54,7 @@ TD *CreateTD( ThreadId tid );
 void InitTD( TD *td, uval32 pc, uval32 sp, uval32 priority );
 LL *CreateList(ListType type);
 TD* DequeueHead( LL *list );
+int Dequeue( TD *td, LL *list );
 RC DestroyList( LL *list );
 RC PriorityEnqueue( TD *td, LL *list );
 RC EnqueueAtHead( TD *td, LL *list );
@@ -63,7 +64,6 @@ TD * FindPrevTD(ThreadId pid, LL* list);
 TD * FindTD(ThreadId pid, LL *list);
 void DequeueTD(TD* td);
 int FreeQEnqueue(TD *td, LL *list);
-TD * FreeQDequeue(LL *list);
-
+int FreeQDequeue(LL *list);
 
 #endif
